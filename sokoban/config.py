@@ -66,16 +66,18 @@ def load_config(path: str | Path) -> AppConfig:
     window_data = data.get("window", {})
     search_data = data.get("search", {})
 
+    goals_data = board_data.get("goals", state_data.get("goals", []))
+
     board = Board.from_iterables(
         rows=int(board_data["rows"]),
         cols=int(board_data["cols"]),
         walls=[_position_from_list(item) for item in board_data.get("walls", [])],
+        goals=[_position_from_list(item) for item in goals_data],
     )
 
     initial_state = State.from_iterables(
         player=_position_from_list(state_data["player"]),
         boxes=[_position_from_list(item) for item in state_data.get("boxes", [])],
-        goals=[_position_from_list(item) for item in state_data.get("goals", [])],
     )
 
     _validate_entities_inside_board(board, initial_state)
@@ -141,11 +143,8 @@ def _validate_entities_inside_board(board: Board, state: State) -> None:
         if box in board.walls:
             raise ValueError(f"Caja sobre pared: {box}")
 
-    for goal in state.goals:
-        if not board.contains(goal):
-            raise ValueError(f"Meta fuera del tablero: {goal}")
-        if goal in board.walls:
-            raise ValueError(f"Meta sobre pared: {goal}")
+    if len(board.goals) != len(state.boxes):
+        raise ValueError("La cantidad de metas debe coincidir con la cantidad de cajas.")
 
 
 def _normalize_algorithm(raw: str) -> str:

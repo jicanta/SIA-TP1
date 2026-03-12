@@ -44,7 +44,7 @@ def solve_bfs(initial_state: State, board: Board) -> SearchResult:
         current = frontier.popleft()
         expanded_nodes += 1
 
-        if current.state.is_goal_state():
+        if current.state.is_goal_state(board.goals):
             path_states, actions = _reconstruct_path(current)
             return SearchResult(
                 algorithm="bfs",
@@ -84,7 +84,7 @@ def solve_dfs(initial_state: State, board: Board, depth_limit: int = 10_000) -> 
         current = frontier.pop()
         expanded_nodes += 1
 
-        if current.state.is_goal_state():
+        if current.state.is_goal_state(board.goals):
             path_states, actions = _reconstruct_path(current)
             return SearchResult(
                 algorithm="dfs",
@@ -136,7 +136,7 @@ def _successors(state: State, board: Board) -> Iterable[tuple[str, State]]:
             boxes.remove(next_player)
             boxes.add(next_box)
 
-        yield action, State(player=next_player, boxes=frozenset(boxes), goals=state.goals)
+        yield action, State(player=next_player, boxes=frozenset(boxes))
 
 
 def _reconstruct_path(goal_node: _Node) -> tuple[tuple[State, ...], tuple[str, ...]]:

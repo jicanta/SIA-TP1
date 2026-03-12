@@ -3,6 +3,7 @@ from __future__ import annotations
 from collections.abc import Sequence
 
 import arcade
+from arcade import shape_list
 
 from ..config import AppConfig
 from ..models.position import Position
@@ -42,14 +43,12 @@ class SokobanWindow(arcade.Window):
         )
 
         arcade.set_background_color(self.render.color_background)
+        self._static_shapes = self._build_static_shapes()
+        self._progress_text, self._overlay_texts = self._build_overlay_texts()
 
     def on_draw(self) -> None:
         self.clear()
-        self._draw_floor()
-        if self.render.draw_grid:
-            self._draw_grid_lines()
-        self._draw_walls()
-        self._draw_goals()
+        self._static_shapes.draw()
         self._draw_boxes()
         self._draw_player()
         self._draw_overlay()
@@ -67,19 +66,35 @@ class SokobanWindow(arcade.Window):
         self._elapsed_time = 0.0
         self.sequence_index += 1
         self.state = self.state_sequence[self.sequence_index]
+        self._progress_text.text = self._progress_label()
 
-    def _draw_floor(self) -> None:
+    def _build_static_shapes(self) -> shape_list.ShapeElementList:
+        shapes = shape_list.ShapeElementList()
+        shapes.append(self._build_floor_shape())
+        if self.render.draw_grid:
+            for line in self._build_grid_shapes():
+                shapes.append(line)
+        for wall in self._build_wall_shapes():
+            shapes.append(wall)
+        for goal in self._build_goal_shapes():
+            shapes.append(goal)
+        return shapes
+
+    def _build_floor_shape(self) -> shape_list.Shape:
         width = self.board.cols * self.render.cell_size
         height = self.board.rows * self.render.cell_size
-        arcade.draw_lbwh_rectangle_filled(
-            self.render.margin,
-            self.render.margin,
+        center_x = self.render.margin + width / 2
+        center_y = self.render.margin + height / 2
+        return shape_list.create_rectangle_filled(
+            center_x,
+            center_y,
             width,
             height,
-            self.render.color_floor,
+            self._to_rgba(self.render.color_floor),
         )
 
-    def _draw_grid_lines(self) -> None:
+    def _build_grid_shapes(self) -> list[shape_list.Shape]:
+        lines: list[shape_list.Shape] = []
         cs = self.render.cell_size
         left = self.render.margin
         bottom = self.render.margin
@@ -88,23 +103,36 @@ class SokobanWindow(arcade.Window):
 
         for col in range(self.board.cols + 1):
             x = left + col * cs
-            arcade.draw_line(x, bottom, x, top, self.render.color_grid, 1)
+            lines.append(shape_list.create_line(x, bottom, x, top, self._to_rgba(self.render.color_grid), 1))
 
         for row in range(self.board.rows + 1):
             y = bottom + row * cs
-            arcade.draw_line(left, y, right, y, self.render.color_grid, 1)
+            lines.append(shape_list.create_line(left, y, right, y, self._to_rgba(self.render.color_grid), 1))
+        return lines
 
-    def _draw_walls(self) -> None:
+    def _build_wall_shapes(self) -> list[shape_list.Shape]:
+        wall_shapes: list[shape_list.Shape] = []
+        size = self.render.cell_size
         for wall in self.board.walls:
             x, y = self._cell_center(wall)
-            size = self.render.cell_size
-            self._draw_square_centered(x, y, size, self.render.color_wall)
+            wall_shapes.append(shape_list.create_rectangle_filled(x, y, size, size, self._to_rgba(self.render.color_wall)))
+        return wall_shapes
 
-    def _draw_goals(self) -> None:
+    def _build_goal_shapes(self) -> list[shape_list.Shape]:
+        goal_shapes: list[shape_list.Shape] = []
         radius = self.render.cell_size * 0.23
-        for goal in self.state.goals:
+        for goal in self.board.goals:
             x, y = self._cell_center(goal)
-            arcade.draw_circle_filled(x, y, radius, self.render.color_goal)
+            goal_shapes.append(
+                shape_list.create_ellipse_filled(
+                    x,
+                    y,
+                    radius * 2,
+                    radius * 2,
+                    self._to_rgba(self.render.color_goal),
+                )
+            )
+        return goal_shapes
 
     def _draw_boxes(self) -> None:
         size = self.render.cell_size * 0.72
@@ -138,17 +166,30 @@ class SokobanWindow(arcade.Window):
             color,
         )
 
-    def _draw_overlay(self) -> None:
+    def _build_overlay_texts(self) -> tuple[arcade.Text, tuple[arcade.Text, ...]]:
         top = self.height - 28
         color = (230, 230, 230)
 
-        progress = f"Paso: {self.sequence_index}/{max(0, len(self.state_sequence) - 1)}"
-        arcade.draw_text(progress, 14, top, color, 14)
-
+        progress_text = arcade.Text(self._progress_label(), 14, top, color, 14)
+        static_lines: list[arcade.Text] = []
         y = top - 20
         for line in self.overlay_lines:
-            arcade.draw_text(line, 14, y, color, 13)
+            static_lines.append(arcade.Text(line, 14, y, color, 13))
             y -= 18
+
+        return progress_text, tuple(static_lines)
+
+    def _progress_label(self) -> str:
+        return f"Paso: {self.sequence_index}/{max(0, len(self.state_sequence) - 1)}"
+
+    def _draw_overlay(self) -> None:
+        self._progress_text.draw()
+        for text_line in self._overlay_texts:
+            text_line.draw()
+
+    @staticmethod
+    def _to_rgba(color: tuple[int, int, int]) -> tuple[int, int, int, int]:
+        return color[0], color[1], color[2], 255
 
 
 def run_visualizer(

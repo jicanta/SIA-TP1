@@ -37,7 +37,7 @@ py -3.12 -m venv .venv-win
 
 ## Configuración
 El archivo `config.json` controla:
-- tablero (`board`)
-- estado inicial (`state`)
+- tablero (`board`: incluye paredes y metas fijas)
+- estado inicial (`state`: jugador y cajas)
 - render (`render`)
 - búsqueda (`search`: algoritmo por defecto, límite DFS y velocidad de animación)
