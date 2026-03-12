@@ -4,7 +4,7 @@ from .config import AppConfig, RenderConfig, SearchConfig, WindowConfig, load_co
 from .models.board import Board
 from .models.position import Position
 from .models.state import State
-from .search import SearchResult, solve_bfs, solve_dfs
+from .search import SearchResult, solve_bfs, solve_dfs, solve_dls, solve_iddfs
 
 __all__ = [
     "AppConfig",
@@ -18,4 +18,6 @@ __all__ = [
     "load_config",
     "solve_bfs",
     "solve_dfs",
+    "solve_dls",
+    "solve_iddfs",
 ]

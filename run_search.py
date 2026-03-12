@@ -4,7 +4,7 @@ import argparse
 from pathlib import Path
 
 from sokoban.config import AppConfig, load_config
-from sokoban.search import SearchResult, solve_bfs, solve_dfs
+from sokoban.search import SearchResult, solve_bfs, solve_dfs, solve_dls, solve_iddfs
 
 
 def main() -> None:
@@ -48,7 +48,7 @@ def _parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Busqueda desinformada para Sokoban.")
     parser.add_argument(
         "--algorithm",
-        choices=["bfs", "dfs"],
+        choices=["bfs", "dfs", "dls", "iddfs"],
         help="Algoritmo a usar. Si se omite, se usa el de config.json",
     )
     parser.add_argument(
@@ -69,6 +69,18 @@ def _run_search(config: AppConfig, algorithm: str) -> SearchResult:
             config.initial_state,
             config.board,
             depth_limit=config.search.dfs_depth_limit,
+        )
+    if algorithm_name == "dls":
+        return solve_dls(
+            config.initial_state,
+            config.board,
+            depth_limit=config.search.dfs_depth_limit,
+        )
+    if algorithm_name == "iddfs":
+        return solve_iddfs(
+            config.initial_state,
+            config.board,
+            max_depth=config.search.dfs_depth_limit,
         )
     raise ValueError(f"Algoritmo no soportado: {algorithm}")
 

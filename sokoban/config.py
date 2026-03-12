@@ -149,6 +149,6 @@ def _validate_entities_inside_board(board: Board, state: State) -> None:
 
 def _normalize_algorithm(raw: str) -> str:
     value = str(raw).strip().lower()
-    if value not in {"bfs", "dfs"}:
+    if value not in {"bfs", "dfs", "dls", "iddfs"}:
         raise ValueError(f"Algoritmo invalido en config: {raw}")
     return value

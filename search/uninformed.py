@@ -89,56 +89,71 @@ def solve_dfs(
     problem: SearchProblem[StateT, ActionT],
     depth_limit: int = 10_000,
 ) -> SearchResult[StateT, ActionT]:
-    initial_state = problem.initial_state
-    frontier: list[_Node[StateT, ActionT]] = [_Node(state=initial_state, parent=None, action=None, depth=0)]
-    visited: set[StateT] = {initial_state}
-    expanded_nodes = 0
-    generated_nodes = 0
+    _validate_non_negative(depth_limit, "depth_limit")
+    result, _, _ = _run_depth_limited_iteration(
+        problem=problem,
+        depth_limit=depth_limit,
+        algorithm_name="dfs",
+    )
+    return result
 
-    while frontier:
-        current = frontier.pop()
-        expanded_nodes += 1
 
-        if problem.is_goal(current.state):
-            path_states, actions = _reconstruct_path(current)
+def solve_dls(
+    problem: SearchProblem[StateT, ActionT],
+    depth_limit: int,
+) -> SearchResult[StateT, ActionT]:
+    _validate_non_negative(depth_limit, "depth_limit")
+    result, _, _ = _run_depth_limited_iteration(
+        problem=problem,
+        depth_limit=depth_limit,
+        algorithm_name="dls",
+    )
+    return result
+
+
+def solve_iddfs(
+    problem: SearchProblem[StateT, ActionT],
+    max_depth: int = 10_000,
+) -> SearchResult[StateT, ActionT]:
+    _validate_non_negative(max_depth, "max_depth")
+
+    total_expanded_nodes = 0
+    total_generated_nodes = 0
+    visited_states: set[StateT] = {problem.initial_state}
+
+    for depth_limit in range(max_depth + 1):
+        partial_result, cutoff, partial_visited = _run_depth_limited_iteration(
+            problem=problem,
+            depth_limit=depth_limit,
+            algorithm_name="iddfs",
+            allow_shallower_revisit=True,
+        )
+        total_expanded_nodes += partial_result.expanded_nodes
+        total_generated_nodes += partial_result.generated_nodes
+        visited_states.update(partial_visited)
+
+        if partial_result.found:
             return SearchResult(
-                algorithm="dfs",
+                algorithm="iddfs",
                 found=True,
-                path_states=path_states,
-                actions=actions,
-                expanded_nodes=expanded_nodes,
-                generated_nodes=generated_nodes,
-                visited_nodes=len(visited),
+                path_states=partial_result.path_states,
+                actions=partial_result.actions,
+                expanded_nodes=total_expanded_nodes,
+                generated_nodes=total_generated_nodes,
+                visited_nodes=len(visited_states),
             )
 
-        if current.depth >= depth_limit:
-            continue
-
-        next_nodes: list[_Node[StateT, ActionT]] = []
-        for action, next_state in problem.successors(current.state):
-            generated_nodes += 1
-            if next_state in visited:
-                continue
-            visited.add(next_state)
-            next_nodes.append(
-                _Node(
-                    state=next_state,
-                    parent=current,
-                    action=action,
-                    depth=current.depth + 1,
-                )
-            )
-
-        frontier.extend(reversed(next_nodes))
+        if not cutoff:
+            break
 
     return SearchResult(
-        algorithm="dfs",
+        algorithm="iddfs",
         found=False,
-        path_states=(initial_state,),
+        path_states=(problem.initial_state,),
         actions=tuple(),
-        expanded_nodes=expanded_nodes,
-        generated_nodes=generated_nodes,
-        visited_nodes=len(visited),
+        expanded_nodes=total_expanded_nodes,
+        generated_nodes=total_generated_nodes,
+        visited_nodes=len(visited_states),
     )
 
 
@@ -158,3 +173,86 @@ def _reconstruct_path(
     states.reverse()
     actions.reverse()
     return tuple(states), tuple(actions)
+
+
+def _run_depth_limited_iteration(
+    problem: SearchProblem[StateT, ActionT],
+    depth_limit: int,
+    algorithm_name: str,
+    allow_shallower_revisit: bool = False,
+) -> tuple[SearchResult[StateT, ActionT], bool, set[StateT]]:
+    initial_state = problem.initial_state
+    frontier: list[_Node[StateT, ActionT]] = [_Node(state=initial_state, parent=None, action=None, depth=0)]
+    visited_states: set[StateT] = {initial_state}
+    min_depth_seen: dict[StateT, int] | None = {initial_state: 0} if allow_shallower_revisit else None
+    expanded_nodes = 0
+    generated_nodes = 0
+    reached_depth_limit = False
+
+    while frontier:
+        current = frontier.pop()
+        expanded_nodes += 1
+
+        if problem.is_goal(current.state):
+            path_states, actions = _reconstruct_path(current)
+            return (
+                SearchResult(
+                    algorithm=algorithm_name,
+                    found=True,
+                    path_states=path_states,
+                    actions=actions,
+                    expanded_nodes=expanded_nodes,
+                    generated_nodes=generated_nodes,
+                    visited_nodes=len(visited_states),
+                ),
+                reached_depth_limit,
+                visited_states,
+            )
+
+        if current.depth >= depth_limit:
+            reached_depth_limit = True
+            continue
+
+        next_depth = current.depth + 1
+        next_nodes: list[_Node[StateT, ActionT]] = []
+        for action, next_state in problem.successors(current.state):
+            generated_nodes += 1
+
+            if min_depth_seen is not None:
+                prev_depth = min_depth_seen.get(next_state)
+                if prev_depth is not None and prev_depth <= next_depth:
+                    continue
+                min_depth_seen[next_state] = next_depth
+            elif next_state in visited_states:
+                continue
+
+            visited_states.add(next_state)
+            next_nodes.append(
+                _Node(
+                    state=next_state,
+                    parent=current,
+                    action=action,
+                    depth=next_depth,
+                )
+            )
+
+        frontier.extend(reversed(next_nodes))
+
+    return (
+        SearchResult(
+            algorithm=algorithm_name,
+            found=False,
+            path_states=(initial_state,),
+            actions=tuple(),
+            expanded_nodes=expanded_nodes,
+            generated_nodes=generated_nodes,
+            visited_nodes=len(visited_states),
+        ),
+        reached_depth_limit,
+        visited_states,
+    )
+
+
+def _validate_non_negative(value: int, name: str) -> None:
+    if value < 0:
+        raise ValueError(f"{name} must be >= 0, got {value}")

@@ -3,7 +3,13 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Iterable
 
-from search import SearchResult, solve_bfs as solve_generic_bfs, solve_dfs as solve_generic_dfs
+from search import (
+    SearchResult,
+    solve_bfs as solve_generic_bfs,
+    solve_dfs as solve_generic_dfs,
+    solve_dls as solve_generic_dls,
+    solve_iddfs as solve_generic_iddfs,
+)
 
 from ..models.board import Board
 from ..models.state import State
@@ -55,4 +61,26 @@ def solve_dfs(
     return solve_generic_dfs(
         _SokobanProblem(initial_state=initial_state, board=board),
         depth_limit=depth_limit,
+    )
+
+
+def solve_dls(
+    initial_state: State,
+    board: Board,
+    depth_limit: int,
+) -> SearchResult[State, str]:
+    return solve_generic_dls(
+        _SokobanProblem(initial_state=initial_state, board=board),
+        depth_limit=depth_limit,
+    )
+
+
+def solve_iddfs(
+    initial_state: State,
+    board: Board,
+    max_depth: int = 10_000,
+) -> SearchResult[State, str]:
+    return solve_generic_iddfs(
+        _SokobanProblem(initial_state=initial_state, board=board),
+        max_depth=max_depth,
     )
