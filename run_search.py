@@ -4,7 +4,20 @@ import argparse
 from pathlib import Path
 
 from sokoban.config import AppConfig, load_config
-from sokoban.search import SearchResult, solve_bfs, solve_dfs, solve_dls, solve_iddfs
+from sokoban.search import (
+    SearchResult,
+    solve_bfs,
+    solve_dfs,
+    solve_dls,
+    solve_iddfs,
+    solve_astar_h1,
+    solve_astar_h2,
+    solve_astar_h2_player,
+    solve_greedy_h2,
+    solve_greedy_h2_player,
+    solve_astar_h2_player_deadlock,
+    solve_greedy_h2_player_deadlock,
+)
 
 
 def main() -> None:
@@ -48,7 +61,13 @@ def _parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Busqueda desinformada para Sokoban.")
     parser.add_argument(
         "--algorithm",
-        choices=["bfs", "dfs", "dls", "iddfs"],
+        choices=[
+            "bfs", "dfs", "dls", "iddfs",
+            "astar_h1", "astar_h2", "astar_h1_player", "astar_h2_player",
+            "greedy_h1", "greedy_h2", "greedy_h1_player", "greedy_h2_player",
+            "astar_h2_deadlock", "astar_h2_player_deadlock",
+            "greedy_h2_deadlock", "greedy_h2_player_deadlock",
+        ],
         help="Algoritmo a usar. Si se omite, se usa el de config.json",
     )
     parser.add_argument(
@@ -82,6 +101,42 @@ def _run_search(config: AppConfig, algorithm: str) -> SearchResult:
             config.board,
             max_depth=config.search.dfs_depth_limit,
         )
+    if algorithm_name == "astar_h1":
+        return solve_astar_h1(
+            config.initial_state,
+            config.board
+        )
+    if algorithm_name == "astar_h2":
+        return solve_astar_h2(
+            config.initial_state,
+            config.board
+        )
+    if algorithm_name == "astar_h2_player":
+        return solve_astar_h2_player(
+            config.initial_state,
+            config.board
+        )
+    if algorithm_name == "greedy_h2":
+        return solve_greedy_h2(
+            config.initial_state,
+            config.board
+        )
+    if algorithm_name == "greedy_h2_player":
+        return solve_greedy_h2_player(
+            config.initial_state,
+            config.board
+        )
+    if algorithm_name == "astar_h2_player_deadlock":
+        return solve_astar_h2_player_deadlock(
+            config.initial_state,
+            config.board
+        )
+    if algorithm_name == "greedy_h2_player_deadlock":
+        return solve_greedy_h2_player_deadlock(
+            config.initial_state,
+            config.board
+        )
+
     raise ValueError(f"Algoritmo no soportado: {algorithm}")
 
 
