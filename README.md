@@ -26,11 +26,11 @@ python run_visualizer.py
 Sirve para abrir la ventana y mostrar el estado inicial configurado.
 
 ### Ejecutar un nivel con visualización
-python run_search.py --level <LEVEL> --algorithm <ALGORITHM>
+python run_search.py --level `LEVEL` --algorithm `ALGORITHM`
 
-<LEVEL>: level_1, level_2, level_3, level_4
+`LEVEL`:level_1, level_2, level_3
 
-<ALGORITHM>:
+`ALGORITHM`:
 
 Desinformados: bfs, dfs, dls, iddfs
 
@@ -41,11 +41,11 @@ Greedy: greedy_h1, greedy_h1_player, greedy_h2, greedy_h2_player, greedy_h2_dead
 Sirve para correr un nivel y ver la solución en la ventana gráfica.
 
 ### Ejecutar un nivel sin visualización
-python run_search.py --level <LEVEL> --algorithm <ALGORITHM> --no-visualizer
+python run_search.py --level `LEVEL` --algorithm `ALGORITHM` --no-visualizer
 
-<LEVEL>: level_1, level_2, level_3, level_4
+`LEVEL`: level_1, level_2, level_3
 
-<ALGORITHM>:
+`ALGORITHM`:
 
 Desinformados: bfs, dfs, dls, iddfs
 
