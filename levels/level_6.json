@@ -1,0 +1,50 @@
+{
+    "window": {
+        "title": "Sokoban Visualizer",
+        "fps": 60
+    },
+    "search": {
+        "algorithm": "bfs",
+        "dfs_depth_limit": 3000,
+        "animation_step_seconds": 0.5
+    },
+    "board": {
+        "rows": 8,
+        "cols": 8,
+        "goals": [
+            [2, 2],
+            [2, 5]
+        ],
+        "walls": [
+            [0, 0], [0, 1], [0, 2], [0, 3], [0, 4], [0, 5], [0, 6], [0, 7],
+            [1, 0], [1, 7],
+            [2, 0], [2, 7],
+            [3, 0], [3, 7],
+            [4, 0], [4, 4], [4, 7],
+            [5, 0], [5, 7],
+            [6, 0], [6, 7],
+            [7, 0], [7, 1], [7, 2], [7, 3], [7, 4], [7, 5], [7, 6], [7, 7]
+        ]
+    },
+    "state": {
+        "player": [6, 3],
+        "boxes": [
+            [5, 2],
+            [5, 5]
+        ]
+    },
+    "render": {
+        "cell_size": 72,
+        "margin": 24,
+        "draw_grid": true,
+        "colors": {
+            "background": "#14191f",
+            "floor": "#c08a78",
+            "grid": "#6b5c57",
+            "wall": "#6b4a3a",
+            "goal": "#d9d1b8",
+            "box": "#b8b6c9",
+            "player": "#3bd24a"
+        }
+    }
+}
