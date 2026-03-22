@@ -1,7 +1,4 @@
 {
-  "window": {
-    "title": "8 Puzzle - Challenge"
-  },
   "state": {
     "board": [
       [7, 5, 1],

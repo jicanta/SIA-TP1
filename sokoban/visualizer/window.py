@@ -180,7 +180,12 @@ class SokobanWindow(arcade.Window):
         return progress_text, tuple(static_lines)
 
     def _progress_label(self) -> str:
-        return f"Paso: {self.sequence_index}/{max(0, len(self.state_sequence) - 1)}"
+        total_steps = max(0, len(self.state_sequence) - 1)
+        if total_steps == 0:
+            return "Paso: sin animacion"
+        if self.sequence_index == 0:
+            return f"Paso: inicio/{total_steps}"
+        return f"Paso: {self.sequence_index}/{total_steps}"
 
     def _draw_overlay(self) -> None:
         self._progress_text.draw()

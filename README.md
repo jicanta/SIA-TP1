@@ -22,20 +22,22 @@ pip install arcade pandas matplotlib
 
 ## Comandos principales
 
-### Solo visualizador del estado inicial
-python run_visualizer.py
+### Sokoban: buscar y visualizar una solución
+python run_visualizer.py --level `LEVEL` --algorithm `ALGORITHM`
 
-Sirve para abrir la ventana y mostrar el estado inicial configurado.
+Busca usando el algoritmo configurado para ese nivel y anima la solución en la ventana.
+Si solo querés abrir el estado inicial, agregá `--initial-only`.
 
-### 8-puzzle: solo visualizador del estado inicial
+### 8-puzzle: buscar y visualizar una solución
 python run_eight_puzzle_visualizer.py --puzzle `PUZZLE`
 
-Sirve para abrir la ventana y mostrar el tablero inicial de un puzzle en `eight_puzzle/puzzles/`.
+Busca usando el algoritmo configurado para ese puzzle y anima la solución en la ventana.
+Si solo querés abrir el tablero inicial, agregá `--initial-only`.
 
 ### 8-puzzle: ejecutar búsqueda con visualización
-python run_eight_puzzle.py --puzzle `PUZZLE` --algorithm `ALGORITHM`
+python 8-puzzle/run_eight_puzzle.py --puzzle `PUZZLE` --algorithm `ALGORITHM`
 
-`PUZZLE`: usar `python run_eight_puzzle.py --list-puzzles` para ver los disponibles
+`PUZZLE`: usar `python 8-puzzle/run_eight_puzzle.py --list-puzzles` para ver los disponibles
 
 `ALGORITHM`:
 
@@ -46,16 +48,16 @@ Informados: astar_h1, astar_h2, greedy_h1, greedy_h2
 El estado objetivo del 8-puzzle no es una única disposición fija: se considera resuelto cualquier tablero que preserve las adyacencias del tablero canónico `1 2 3 / 4 5 6 / 7 8 ?`, tal como se define en `Ejercicio1.md`.
 
 ### 8-puzzle: ejecutar búsqueda sin visualización
-python run_eight_puzzle.py --puzzle `PUZZLE` --algorithm `ALGORITHM` --no-visualizer
+python 8-puzzle/run_eight_puzzle.py --puzzle `PUZZLE` --algorithm `ALGORITHM` --no-visualizer
 
 Sirve para correr el 8-puzzle y ver solo el resumen por consola.
 
 La organización del 8-puzzle quedó así:
 
-- `eight_puzzle/configs/default.json`: configuración compartida de ventana, render y búsqueda
-- `eight_puzzle/puzzles/*.json`: tableros disponibles
-- `run_eight_puzzle.py`: ejecuta la búsqueda y permite elegir puzzle por nombre
-- `run_eight_puzzle_visualizer.py`: abre un puzzle puntual sin correr búsqueda
+- `8-puzzle/eight_puzzle/configs/default.json`: configuración compartida de ventana, render y búsqueda
+- `8-puzzle/eight_puzzle/puzzles/*.json`: tableros disponibles
+- `8-puzzle/run_eight_puzzle.py`: ejecuta la búsqueda y permite elegir puzzle por nombre
+- `8-puzzle/run_eight_puzzle_visualizer.py`: busca y visualiza una solución; con `--initial-only` muestra solo el estado inicial
 
 ### Ejecutar un nivel con visualización
 python run_search.py --level `LEVEL` --algorithm `ALGORITHM`

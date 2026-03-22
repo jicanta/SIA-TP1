@@ -1,7 +1,4 @@
 {
-  "window": {
-    "title": "8 Puzzle - Easy"
-  },
   "state": {
     "board": [
       [1, 2, 3],

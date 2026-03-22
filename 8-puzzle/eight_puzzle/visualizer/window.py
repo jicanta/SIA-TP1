@@ -291,10 +291,11 @@ class EightPuzzleWindow(arcade.Window):
         self._blank_text.x = blank_center_x
         self._blank_text.y = blank_center_y
         self._progress_text.text = self._progress_label()
+        positions = self.state.positions
 
         for tile in range(1, 9):
-            center_x = self._cell_center_x(self.state.positions[tile])
-            center_y = self._cell_center_y(self.state.positions[tile])
+            center_x = self._cell_center_x(positions[tile])
+            center_y = self._cell_center_y(positions[tile])
             self._tile_texts[tile].x = center_x
             self._tile_texts[tile].y = center_y
             self._tile_shadow_texts[tile].x = center_x + 2
@@ -336,10 +337,11 @@ class EightPuzzleWindow(arcade.Window):
         tile_shadow_offset_y = self.render.cell_size * 0.045
         tile_width = self.render.cell_size - inset * 2
         tile_height = self.render.cell_size - inset * 2
+        positions = self.state.positions
 
         for tile in range(1, 9):
             tile_color = self._tile_color(tile, solved)
-            left, bottom = self._cell_left_bottom(self.state.positions[tile])
+            left, bottom = self._cell_left_bottom(positions[tile])
             arcade.draw_lbwh_rectangle_filled(
                 left + inset + tile_shadow_offset_x,
                 bottom + inset - tile_shadow_offset_y,

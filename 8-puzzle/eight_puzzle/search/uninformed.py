@@ -29,8 +29,9 @@ class _EightPuzzleProblem:
         return state.is_goal_state()
 
     def successors(self, state: State) -> Iterable[tuple[str, State]]:
-        board = state.board
-        blank_row, blank_col = divmod(state.blank_cell, BOARD_SIZE)
+        board = list(state.board)
+        blank_cell = state.blank_cell
+        blank_row, blank_col = divmod(blank_cell, BOARD_SIZE)
 
         for action, d_row, d_col in DIRECTIONS:
             next_row = blank_row + d_row
@@ -39,13 +40,12 @@ class _EightPuzzleProblem:
                 continue
 
             swapped_cell = next_row * BOARD_SIZE + next_col
-            swapped_tile = board[swapped_cell]
-            next_positions = list(state.positions)
-            next_positions[0], next_positions[swapped_tile] = (
-                next_positions[swapped_tile],
-                next_positions[0],
+            next_board = list(board)
+            next_board[blank_cell], next_board[swapped_cell] = (
+                next_board[swapped_cell],
+                next_board[blank_cell],
             )
-            yield action, State(positions=tuple(next_positions))
+            yield action, State(board=tuple(next_board))
 
 
 def solve_bfs(initial_state: State) -> SearchResult[State, str]:

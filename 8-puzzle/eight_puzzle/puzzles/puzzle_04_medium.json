@@ -1,7 +1,4 @@
 {
-  "window": {
-    "title": "8 Puzzle - Medium"
-  },
   "state": {
     "board": [
       [1, 3, 6],

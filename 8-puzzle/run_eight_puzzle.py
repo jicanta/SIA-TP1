@@ -7,10 +7,15 @@ import subprocess
 import sys
 from pathlib import Path
 
-from sokoban.runner import (
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
+
+from eight_puzzle.runner import (
     SUPPORTED_ALGORITHMS,
     build_overlay_lines,
     load_requested_config,
+    print_available_puzzles,
     print_summary,
     run_search,
 )
@@ -18,24 +23,23 @@ from sokoban.runner import (
 
 def main() -> None:
     args = _parse_args()
-    config, level_label = load_requested_config(args.level)
+    if args.list_puzzles:
+        print_available_puzzles()
+        return
+    _maybe_restart_for_visualizer(args)
+
+    config, puzzle_label = load_requested_config(args.config, args.puzzle)
 
     algorithm = args.algorithm or config.search.algorithm
-    print(f"Buscando solucion para {level_label} con {algorithm.upper()}...", flush=True)
-    try:
-        result = run_search(config, algorithm)
-    except KeyboardInterrupt as exc:
-        raise SystemExit("Busqueda interrumpida por el usuario.") from exc
+    result = run_search(config, algorithm)
 
-    print_summary(result, level_label)
+    print_summary(result, puzzle_label)
 
     if args.no_visualizer:
         return
 
-    _maybe_restart_for_visualizer(args)
-
     try:
-        from sokoban.visualizer import run_visualizer
+        from eight_puzzle.visualizer import run_visualizer
     except ModuleNotFoundError as exc:
         if exc.name == "arcade":
             raise SystemExit("Falta la dependencia 'arcade'. Instala con: pip install arcade") from exc
@@ -44,22 +48,33 @@ def main() -> None:
     run_visualizer(
         config=config,
         state_sequence=result.path_states,
-        overlay_lines=build_overlay_lines(result, level_label),
+        overlay_lines=build_overlay_lines(result, puzzle_label),
         step_seconds=config.search.animation_step_seconds,
     )
 
 
 def _parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Busqueda desinformada para Sokoban.")
-    parser.add_argument(
-        "--level",
+    parser = argparse.ArgumentParser(description="Busqueda y visualizacion para el 8-puzzle.")
+    source_group = parser.add_mutually_exclusive_group()
+    source_group.add_argument(
+        "--config",
         type=str,
-        help="Nombre del nivel a cargar desde la carpeta 'levels' (ej: 'nivel_1' o 'nivel_1.json').",
+        help="Ruta a un archivo JSON de configuracion completo.",
+    )
+    source_group.add_argument(
+        "--puzzle",
+        type=str,
+        help="Nombre del puzzle a cargar desde 8-puzzle/eight_puzzle/puzzles (ej: puzzle_03_short).",
+    )
+    parser.add_argument(
+        "--list-puzzles",
+        action="store_true",
+        help="Lista los puzzles disponibles y termina.",
     )
     parser.add_argument(
         "--algorithm",
         choices=SUPPORTED_ALGORITHMS,
-        help="Algoritmo a usar. Si se omite, se usa el de config.json",
+        help="Algoritmo a usar. Si se omite, se usa el configurado en el JSON.",
     )
     parser.add_argument(
         "--no-visualizer",
@@ -74,30 +89,29 @@ def _maybe_restart_for_visualizer(args: argparse.Namespace) -> None:
         return
     if importlib.util.find_spec("arcade") is not None:
         return
-    if os.environ.get("SOKOBAN_REEXEC") == "1":
+    if os.environ.get("EIGHT_PUZZLE_REEXEC") == "1":
         return
 
-    project_root = Path(__file__).resolve().parent
-    alternate_python = _find_python_with_arcade(project_root)
+    alternate_python = _find_python_with_arcade()
     if alternate_python is None:
         return
 
     env = os.environ.copy()
-    env["SOKOBAN_REEXEC"] = "1"
+    env["EIGHT_PUZZLE_REEXEC"] = "1"
     print(f"Usando {alternate_python.parent.parent.name} para abrir el visualizador.")
     completed = subprocess.run(
         [str(alternate_python), str(Path(__file__).resolve()), *sys.argv[1:]],
         env=env,
-        cwd=project_root,
+        cwd=PROJECT_ROOT,
     )
     raise SystemExit(completed.returncode)
 
 
-def _find_python_with_arcade(project_root: Path) -> Path | None:
+def _find_python_with_arcade() -> Path | None:
     candidates = (
-        project_root / ".venv-win" / "Scripts" / "python.exe",
-        project_root / ".venv" / "Scripts" / "python.exe",
-        project_root / "venv" / "Scripts" / "python.exe",
+        PROJECT_ROOT / ".venv-win" / "Scripts" / "python.exe",
+        PROJECT_ROOT / ".venv" / "Scripts" / "python.exe",
+        PROJECT_ROOT / "venv" / "Scripts" / "python.exe",
     )
     current_python = Path(sys.executable).resolve()
 
@@ -106,15 +120,15 @@ def _find_python_with_arcade(project_root: Path) -> Path | None:
             continue
         if candidate.resolve() == current_python:
             continue
-        if _python_has_arcade(candidate, project_root):
+        if _python_has_arcade(candidate):
             return candidate
     return None
 
 
-def _python_has_arcade(python_path: Path, cwd: Path) -> bool:
+def _python_has_arcade(python_path: Path) -> bool:
     result = subprocess.run(
         [str(python_path), "-c", "import arcade"],
-        cwd=cwd,
+        cwd=PROJECT_ROOT,
         capture_output=True,
         text=True,
     )

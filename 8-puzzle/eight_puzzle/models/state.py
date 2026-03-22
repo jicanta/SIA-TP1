@@ -40,25 +40,35 @@ def _build_orthogonal_neighbors() -> tuple[tuple[int, ...], ...]:
 ORTHOGONAL_NEIGHBORS = _build_orthogonal_neighbors()
 
 
-def _board_to_positions(board_values: tuple[int, ...]) -> tuple[int, ...]:
-    if len(board_values) != CELL_COUNT:
-        raise ValueError(f"El tablero debe tener {CELL_COUNT} celdas, se recibieron {len(board_values)}.")
+def _normalize_board(board_values: Iterable[int] | Iterable[Iterable[int]]) -> tuple[int, ...]:
+    raw_values = tuple(board_values)
+    if not raw_values:
+        raise ValueError("El tablero no puede estar vacio.")
 
-    normalized = tuple(int(tile) for tile in board_values)
+    if all(isinstance(row, (list, tuple)) for row in raw_values):
+        if len(raw_values) != BOARD_SIZE:
+            raise ValueError(f"El tablero matricial debe tener {BOARD_SIZE} filas.")
+        flat: list[int] = []
+        for row in raw_values:
+            if len(row) != BOARD_SIZE:
+                raise ValueError(f"Cada fila del tablero debe tener {BOARD_SIZE} columnas.")
+            flat.extend(int(tile) for tile in row)
+        normalized = tuple(flat)
+    else:
+        normalized = tuple(int(tile) for tile in raw_values)
+
+    if len(normalized) != CELL_COUNT:
+        raise ValueError(f"El tablero debe tener {CELL_COUNT} celdas, se recibieron {len(normalized)}.")
     if tuple(sorted(normalized)) != TILES:
         raise ValueError("El tablero debe contener exactamente una vez cada numero entre 0 y 8.")
+    return normalized
 
+
+def _board_to_positions(board_values: tuple[int, ...]) -> tuple[int, ...]:
     positions = [0] * CELL_COUNT
-    for cell, tile in enumerate(normalized):
+    for cell, tile in enumerate(board_values):
         positions[tile] = cell
     return tuple(positions)
-
-
-def _positions_to_board(positions: tuple[int, ...]) -> tuple[int, ...]:
-    board = [0] * CELL_COUNT
-    for tile, cell in enumerate(positions):
-        board[cell] = tile
-    return tuple(board)
 
 
 CANONICAL_POSITIONS = _board_to_positions(CANONICAL_BOARD)
@@ -109,7 +119,7 @@ def _reflect_anti_diagonal(row: int, col: int) -> tuple[int, int]:
     return BOARD_SIZE - 1 - col, BOARD_SIZE - 1 - row
 
 
-def _build_goal_position_tuples() -> tuple[tuple[int, ...], ...]:
+def _build_goal_boards() -> tuple[tuple[int, ...], ...]:
     transforms: tuple[Callable[[int, int], tuple[int, int]], ...] = (
         _identity,
         _rotate_90,
@@ -121,7 +131,7 @@ def _build_goal_position_tuples() -> tuple[tuple[int, ...], ...]:
         _reflect_anti_diagonal,
     )
 
-    unique_positions: list[tuple[int, ...]] = []
+    unique_boards: list[tuple[int, ...]] = []
     seen: set[tuple[int, ...]] = set()
     for transform in transforms:
         transformed_board = [0] * CELL_COUNT
@@ -129,84 +139,66 @@ def _build_goal_position_tuples() -> tuple[tuple[int, ...], ...]:
             row, col = cell_to_coords(cell)
             next_row, next_col = transform(row, col)
             transformed_board[next_row * BOARD_SIZE + next_col] = tile
-        positions = _board_to_positions(tuple(transformed_board))
-        if positions not in seen:
-            seen.add(positions)
-            unique_positions.append(positions)
-    return tuple(unique_positions)
+        board = tuple(transformed_board)
+        if board not in seen:
+            seen.add(board)
+            unique_boards.append(board)
+    return tuple(unique_boards)
 
 
-GOAL_POSITION_TUPLES = _build_goal_position_tuples()
+GOAL_BOARDS = _build_goal_boards()
+GOAL_BOARD_SET = frozenset(GOAL_BOARDS)
+GOAL_POSITIONS = tuple(_board_to_positions(goal_board) for goal_board in GOAL_BOARDS)
 
 
 @dataclass(frozen=True, slots=True)
 class State:
-    positions: tuple[int, ...]
+    board: tuple[int, ...]
 
     def __post_init__(self) -> None:
-        normalized = tuple(int(cell) for cell in self.positions)
-        if len(normalized) != CELL_COUNT:
-            raise ValueError(f"El vector de posiciones debe tener largo {CELL_COUNT}.")
-        if tuple(sorted(normalized)) != TILES:
-            raise ValueError("El vector de posiciones debe ser una permutacion de 0..8.")
-        object.__setattr__(self, "positions", normalized)
-
-    @classmethod
-    def from_positions(cls, positions: Iterable[int]) -> "State":
-        return cls(positions=tuple(int(cell) for cell in positions))
+        object.__setattr__(self, "board", _normalize_board(self.board))
 
     @classmethod
     def from_board(cls, board_values: Iterable[int] | Iterable[Iterable[int]]) -> "State":
-        flat_board = _flatten_board(board_values)
-        return cls(positions=_board_to_positions(flat_board))
+        return cls(board=_normalize_board(board_values))
+
+    @classmethod
+    def from_positions(cls, positions: Iterable[int]) -> "State":
+        normalized_positions = tuple(int(cell) for cell in positions)
+        if len(normalized_positions) != CELL_COUNT:
+            raise ValueError(f"El vector de posiciones debe tener largo {CELL_COUNT}.")
+        if tuple(sorted(normalized_positions)) != TILES:
+            raise ValueError("El vector de posiciones debe ser una permutacion de 0..8.")
+
+        board = [0] * CELL_COUNT
+        for tile, cell in enumerate(normalized_positions):
+            board[cell] = tile
+        return cls(board=tuple(board))
 
     @property
     def blank_cell(self) -> int:
-        return self.positions[0]
+        return self.board.index(0)
 
     @property
-    def board(self) -> tuple[int, ...]:
-        return _positions_to_board(self.positions)
+    def positions(self) -> tuple[int, ...]:
+        return _board_to_positions(self.board)
+
+    def position_of(self, tile: int) -> int:
+        if tile not in TILES:
+            raise ValueError(f"Ficha invalida: {tile}")
+        return self.board.index(tile)
 
     def as_matrix(self) -> tuple[tuple[int, ...], ...]:
-        board = self.board
         return tuple(
-            tuple(board[row * BOARD_SIZE : (row + 1) * BOARD_SIZE])
+            tuple(self.board[row * BOARD_SIZE : (row + 1) * BOARD_SIZE])
             for row in range(BOARD_SIZE)
         )
 
-    def neighbor_tiles(
-        self,
-        tile: int,
-        board_values: tuple[int, ...] | None = None,
-    ) -> frozenset[int]:
+    def neighbor_tiles(self, tile: int) -> frozenset[int]:
         if tile not in TILES:
             raise ValueError(f"Ficha invalida: {tile}")
-        board = board_values or self.board
-        cell = self.positions[tile]
-        return frozenset(board[neighbor_cell] for neighbor_cell in ORTHOGONAL_NEIGHBORS[cell])
+        cell = self.position_of(tile)
+        return frozenset(self.board[neighbor_cell] for neighbor_cell in ORTHOGONAL_NEIGHBORS[cell])
 
     def is_goal_state(self) -> bool:
-        board = self.board
-        return all(
-            self.neighbor_tiles(tile, board) == CANONICAL_NEIGHBORS[tile]
-            for tile in TILES
-        )
-
-
-def _flatten_board(board_values: Iterable[int] | Iterable[Iterable[int]]) -> tuple[int, ...]:
-    raw_values = tuple(board_values)
-    if not raw_values:
-        raise ValueError("El tablero no puede estar vacio.")
-
-    if all(isinstance(row, (list, tuple)) for row in raw_values):
-        if len(raw_values) != BOARD_SIZE:
-            raise ValueError(f"El tablero matricial debe tener {BOARD_SIZE} filas.")
-        flat: list[int] = []
-        for row in raw_values:
-            if len(row) != BOARD_SIZE:
-                raise ValueError(f"Cada fila del tablero debe tener {BOARD_SIZE} columnas.")
-            flat.extend(int(tile) for tile in row)
-        return tuple(flat)
-
-    return tuple(int(tile) for tile in raw_values)
+        return all(self.neighbor_tiles(tile) == CANONICAL_NEIGHBORS[tile] for tile in TILES)
