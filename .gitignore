@@ -4,19 +4,42 @@ node_modules/
 # Python cache/bytecode
 __pycache__/
 *.py[cod]
+*$py.class
+*.pyd
+*.pyo
 
 # Virtual environments
 .venv/
 .venv-win/
+venv/
+env/
+ENV/
 
 # Python tooling/cache
 .pytest_cache/
 .mypy_cache/
 .ruff_cache/
+.hypothesis/
+.pyre/
+.tox/
+.nox/
+.coverage
+.coverage.*
+htmlcov/
+.ipynb_checkpoints/
+.python-version/
+pip-wheel-metadata/
 
 # Build artifacts
 build/
 dist/
 *.egg-info/
+*.egg
+.eggs/
+site/
+
+# Local env files
+.env
+.env.*
 
 .idea/

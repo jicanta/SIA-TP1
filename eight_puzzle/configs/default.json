@@ -1,0 +1,34 @@
+{
+  "window": {
+    "title": "8 Puzzle Visualizer",
+    "fps": 60
+  },
+  "search": {
+    "algorithm": "astar_h2",
+    "dfs_depth_limit": 40,
+    "animation_step_seconds": 0.45
+  },
+  "render": {
+    "cell_size": 160,
+    "margin": 32,
+    "panel_width": 360,
+    "panel_gap": 28,
+    "draw_grid": true,
+    "font_name": "Trebuchet MS",
+    "colors": {
+      "background": "#0b1218",
+      "panel": "#12202c",
+      "panel_border": "#315170",
+      "board": "#172431",
+      "blank": "#233548",
+      "blank_text": "#8ec5ff",
+      "grid": "#476580",
+      "shadow": "#071018",
+      "tile": "#f3b95f",
+      "tile_goal": "#73c996",
+      "tile_text": "#17202a",
+      "overlay_text": "#d9e4ef",
+      "title": "#f6ead5"
+    }
+  }
+}
