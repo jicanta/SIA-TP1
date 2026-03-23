@@ -200,5 +200,31 @@ class State:
         cell = self.position_of(tile)
         return frozenset(self.board[neighbor_cell] for neighbor_cell in ORTHOGONAL_NEIGHBORS[cell])
 
+    def move_blank(self, d_row: int, d_col: int) -> "State | None":
+        blank_row, blank_col = cell_to_coords(self.blank_cell)
+        next_row = blank_row + d_row
+        next_col = blank_col + d_col
+        if not (0 <= next_row < BOARD_SIZE and 0 <= next_col < BOARD_SIZE):
+            return None
+
+        next_cell = next_row * BOARD_SIZE + next_col
+        next_board = list(self.board)
+        blank_cell = self.blank_cell
+        next_board[blank_cell], next_board[next_cell] = next_board[next_cell], next_board[blank_cell]
+        return State(board=tuple(next_board))
+
+    def flattened_without_blank(self) -> tuple[int, ...]:
+        return tuple(tile for tile in self.board if tile != 0)
+
+    def inversion_count(self) -> int:
+        flattened = self.flattened_without_blank()
+        inversions = 0
+        for index, tile in enumerate(flattened[:-1]):
+            inversions += sum(1 for other in flattened[index + 1 :] if tile > other)
+        return inversions
+
+    def inversion_parity(self) -> int:
+        return self.inversion_count() % 2
+
     def is_goal_state(self) -> bool:
         return all(self.neighbor_tiles(tile) == CANONICAL_NEIGHBORS[tile] for tile in TILES)

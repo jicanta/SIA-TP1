@@ -5,7 +5,11 @@ import importlib.util
 import os
 import subprocess
 import sys
+from dataclasses import replace
 from pathlib import Path
+
+from eight_puzzle.config import AppConfig, DEFAULT_PUZZLE_NAME, load_puzzle_config
+from eight_puzzle.models.state import CANONICAL_BOARD, State
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 if str(PROJECT_ROOT) not in sys.path:
@@ -24,17 +28,21 @@ from eight_puzzle.runner import (
 
 def main() -> None:
     args = _parse_args()
-    if args.list_puzzles:
+    if args.list_puzzles and not args.parity_demo:
         print_available_puzzles()
         return
     _maybe_restart_for_visualizer()
 
     try:
-        from eight_puzzle.visualizer import run_visualizer
+        from eight_puzzle.visualizer import run_parity_visualizer, run_visualizer
     except ModuleNotFoundError as exc:
         if exc.name == "arcade":
             raise SystemExit("Falta la dependencia 'arcade'. Instala con: pip install arcade") from exc
         raise
+
+    if args.parity_demo:
+        run_parity_visualizer(_build_parity_config())
+        return
 
     config, puzzle_label = load_requested_config(args.config, args.puzzle)
 
@@ -84,7 +92,22 @@ def _parse_args() -> argparse.Namespace:
         action="store_true",
         help="Abre solo el tablero inicial sin ejecutar busqueda.",
     )
+    parser.add_argument(
+        "--parity-demo",
+        action="store_true",
+        help="Abre un visualizador manual para explorar la paridad de inversiones desde el tablero canonico.",
+    )
     return parser.parse_args()
+
+
+def _build_parity_config() -> AppConfig:
+    base_config = load_puzzle_config(DEFAULT_PUZZLE_NAME)
+    return replace(
+        base_config,
+        window=replace(base_config.window, title="8 Puzzle - Paridad de Inversiones"),
+        render=replace(base_config.render, panel_width=max(base_config.render.panel_width, 430)),
+        initial_state=State(board=CANONICAL_BOARD),
+    )
 
 
 def _maybe_restart_for_visualizer() -> None:

@@ -236,6 +236,14 @@ class EightPuzzleWindow(arcade.Window):
             for index, line in enumerate(self.overlay_lines)
         )
 
+    def set_overlay_lines(self, overlay_lines: Sequence[str]) -> None:
+        self.overlay_lines = tuple(overlay_lines)
+        self._overlay_texts = self._build_overlay_texts()
+
+    def set_state(self, state: State) -> None:
+        self.state = state
+        self._sync_dynamic_texts()
+
     def _build_progress_text(self) -> arcade.Text:
         badge_left, badge_bottom, badge_width, badge_height = self._progress_badge_bounds()
         return arcade.Text(
