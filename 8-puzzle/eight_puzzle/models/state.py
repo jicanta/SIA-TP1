@@ -160,7 +160,7 @@ class State:
 
     @classmethod
     def from_board(cls, board_values: Iterable[int] | Iterable[Iterable[int]]) -> "State":
-        return cls(board=_normalize_board(board_values))
+        return cls._from_valid_board(_normalize_board(board_values))
 
     @classmethod
     def from_positions(cls, positions: Iterable[int]) -> "State":
@@ -211,7 +211,7 @@ class State:
         next_board = list(self.board)
         blank_cell = self.blank_cell
         next_board[blank_cell], next_board[next_cell] = next_board[next_cell], next_board[blank_cell]
-        return State(board=tuple(next_board))
+        return State._from_valid_board(tuple(next_board))
 
     def flattened_without_blank(self) -> tuple[int, ...]:
         return tuple(tile for tile in self.board if tile != 0)
@@ -226,5 +226,12 @@ class State:
     def inversion_parity(self) -> int:
         return self.inversion_count() % 2
 
+    @classmethod
+    def _from_valid_board(cls, board: tuple[int, ...]) -> "State":
+        """Internal constructor that skips validation — only call with a known-valid board."""
+        obj = object.__new__(cls)
+        object.__setattr__(obj, "board", board)
+        return obj
+
     def is_goal_state(self) -> bool:
-        return all(self.neighbor_tiles(tile) == CANONICAL_NEIGHBORS[tile] for tile in TILES)
+        return self.board in GOAL_BOARD_SET

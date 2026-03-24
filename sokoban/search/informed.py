@@ -38,12 +38,12 @@ def h2_optimal_matching(state: State, goals: FrozenSet[Position]) -> int:
     if not unplaced:
         return 0
     free_goals = list(goals - state.boxes)
-    min_cost = sum(_manhattan(b, g) for b, g in zip(unplaced, free_goals))  # baseline
+    min_cost = float("inf")
     for perm in permutations(free_goals):
         cost = sum(_manhattan(b, g) for b, g in zip(unplaced, perm))
         if cost < min_cost:
             min_cost = cost
-    return min_cost
+    return int(min_cost)
 
 
 def _precompute_deadlock_positions(board: Board) -> FrozenSet[Position]:

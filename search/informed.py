@@ -50,6 +50,7 @@ def solve_astar(
     ]
     best_g: dict[StateT, float] = {initial_state: 0.0}
     closed: set[StateT] = set()
+    generated_states: set[StateT] = {initial_state}
     expanded_nodes = 0
     generated_nodes = 0
 
@@ -70,11 +71,12 @@ def solve_astar(
                 actions=actions,
                 expanded_nodes=expanded_nodes,
                 generated_nodes=generated_nodes,
-                visited_nodes=len(closed),
+                visited_nodes=len(generated_states),
             )
 
         for action, next_state in problem.successors(current.state):
             generated_nodes += 1
+            generated_states.add(next_state)
             if next_state in closed:
                 continue
             new_g = current.g_cost + 1.0
@@ -95,7 +97,7 @@ def solve_astar(
         actions=tuple(),
         expanded_nodes=expanded_nodes,
         generated_nodes=generated_nodes,
-        visited_nodes=len(closed),
+        visited_nodes=len(generated_states),
     )
 
 
@@ -112,16 +114,17 @@ def solve_greedy(
     frontier: list[tuple[float, int, _Node[StateT, ActionT]]] = [
         (heuristic(initial_state), next(tiebreak), start_node)
     ]
-    visited: set[StateT] = set()
+    expanded: set[StateT] = set()
+    generated_states: set[StateT] = {initial_state}
     expanded_nodes = 0
     generated_nodes = 0
 
     while frontier:
         _, _, current = heapq.heappop(frontier)
 
-        if current.state in visited:
+        if current.state in expanded:
             continue
-        visited.add(current.state)
+        expanded.add(current.state)
         expanded_nodes += 1
 
         if problem.is_goal(current.state):
@@ -133,12 +136,13 @@ def solve_greedy(
                 actions=actions,
                 expanded_nodes=expanded_nodes,
                 generated_nodes=generated_nodes,
-                visited_nodes=len(visited),
+                visited_nodes=len(generated_states),
             )
 
         for action, next_state in problem.successors(current.state):
             generated_nodes += 1
-            if next_state in visited:
+            generated_states.add(next_state)
+            if next_state in expanded:
                 continue
             next_node: _Node[StateT, ActionT] = _Node(
                 state=next_state,
@@ -157,5 +161,5 @@ def solve_greedy(
         actions=tuple(),
         expanded_nodes=expanded_nodes,
         generated_nodes=generated_nodes,
-        visited_nodes=len(visited),
+        visited_nodes=len(generated_states),
     )

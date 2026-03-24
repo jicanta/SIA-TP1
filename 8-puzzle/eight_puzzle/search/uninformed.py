@@ -45,7 +45,7 @@ class _EightPuzzleProblem:
                 next_board[swapped_cell],
                 next_board[blank_cell],
             )
-            yield action, State(board=tuple(next_board))
+            yield action, State._from_valid_board(tuple(next_board))
 
 
 def solve_bfs(initial_state: State) -> SearchResult[State, str]:
