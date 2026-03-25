@@ -47,7 +47,7 @@ def main():
                 print(f"Buscando {level} con {algorithm:<30} ... ", end="", flush=True)
 
                 cmd = [
-                    ".venv/bin/python",
+                    "python3",
                     "run_search.py",
                     "--level", f"{level}",
                     "--algorithm", algorithm,

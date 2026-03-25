@@ -15,86 +15,119 @@ Incluye además una implementación del 8-puzzle usando el mismo motor genérico
 
 ## Instalación
 
+```bash
 python3 -m venv venv
 source venv/bin/activate      # Mac/Linux
 .\venv\Scripts\activate       # Windows
 pip install arcade pandas matplotlib
+```
 
-## Comandos principales
+## Sokoban
 
-### Sokoban: buscar y visualizar una solución
-python run_visualizer.py --level `LEVEL` --algorithm `ALGORITHM`
+### Buscar y visualizar una solución
 
-Busca usando el algoritmo configurado para ese nivel y anima la solución en la ventana.
-Si solo querés abrir el estado inicial, agregá `--initial-only`.
+```bash
+python3 run_visualizer.py --level LEVEL --algorithm ALGORITHM
+```
 
-### 8-puzzle: buscar y visualizar una solución
-python run_eight_puzzle_visualizer.py --puzzle `PUZZLE`
+Busca usando el algoritmo indicado y anima la solución en la ventana gráfica.
+Agregá `--initial-only` si solo querés ver el estado inicial sin buscar.
 
-Busca usando el algoritmo configurado para ese puzzle y anima la solución en la ventana.
-Si solo querés abrir el tablero inicial, agregá `--initial-only`.
+### Buscar sin visualización (solo consola)
 
-### 8-puzzle: ejecutar búsqueda con visualización
-python 8-puzzle/run_eight_puzzle.py --puzzle `PUZZLE` --algorithm `ALGORITHM`
+```bash
+python3 run_search.py --level LEVEL --algorithm ALGORITHM --no-visualizer
+```
 
-`PUZZLE`: usar `python 8-puzzle/run_eight_puzzle.py --list-puzzles` para ver los disponibles
+Muestra por consola el resumen con todas las métricas al finalizar:
 
-`ALGORITHM`:
+- `encontrada`: si/no
+- `movimientos`: costo de la solución (largo del camino)
+- `acciones`: secuencia de movimientos (U/D/L/R)
+- `expandidos`: nodos expandidos
+- `generados`: sucesores generados en total
+- `visitados`: estados únicos visitados
+- `frontera`: tamaño de la frontera al finalizar la búsqueda
+- `frontera_max`: tamaño máximo que alcanzó la frontera durante la búsqueda
 
-Desinformados: bfs, dfs, dls, iddfs
+### Ejecutar todos los niveles y algoritmos
 
-Informados: astar_h1, astar_h2, greedy_h1, greedy_h2
+```bash
+python3 run_all.py
+```
+
+Corre todas las combinaciones de niveles y algoritmos y guarda los resultados en `output/results.csv`.
+
+### Generar gráficos
+
+```bash
+python3 plot_results.py
+```
+
+Genera gráficos a partir de `output/results.csv` y los guarda en `output/graphs/`.
+
+### Niveles disponibles
+
+`level_1` hasta `level_11`
+
+### Algoritmos disponibles
+
+**Desinformados:** `bfs`, `dfs`, `dls`, `iddfs`
+
+**A\* (admisibles — garantizan solución óptima):**
+
+| Algoritmo | Heurística |
+|-----------|-----------|
+| `astar_h1` | H1: suma de distancias Manhattan mínimas caja→meta |
+| `astar_h2` | H2: asignación óptima cajas→metas (más informada que H1) |
+| `astar_h1_player` | H3 = H1 + distancia del jugador a la caja más cercana |
+| `astar_h2_player` | H4 = H2 + distancia del jugador a la caja más cercana |
+| `astar_h2_deadlock` | H2 + detección de posiciones de deadlock |
+| `astar_h2_player_deadlock` | H4 + detección de posiciones de deadlock |
+
+**Greedy (admisibles — no garantizan solución óptima):**
+
+| Algoritmo | Heurística |
+|-----------|-----------|
+| `greedy_h1` | H1 |
+| `greedy_h2` | H2 |
+| `greedy_h1_player` | H3 |
+| `greedy_h2_player` | H4 |
+| `greedy_h2_deadlock` | H2 + deadlock |
+| `greedy_h2_player_deadlock` | H4 + deadlock |
+
+---
+
+## 8-Puzzle
+
+### Buscar y visualizar una solución
+
+```bash
+python3 8-puzzle/run_eight_puzzle_visualizer.py --puzzle PUZZLE
+```
+
+### Buscar sin visualización
+
+```bash
+python3 8-puzzle/run_eight_puzzle.py --puzzle PUZZLE --algorithm ALGORITHM --no-visualizer
+```
+
+Ver puzzles disponibles:
+
+```bash
+python3 8-puzzle/run_eight_puzzle.py --list-puzzles
+```
+
+**Algoritmos disponibles:**
+
+- Desinformados: `bfs`, `dfs`, `dls`, `iddfs`
+- Informados: `astar_h1`, `astar_h2`, `greedy_h1`, `greedy_h2`
 
 El estado objetivo del 8-puzzle no es una única disposición fija: se considera resuelto cualquier tablero que preserve las adyacencias del tablero canónico `1 2 3 / 4 5 6 / 7 8 ?`, tal como se define en `Ejercicio1.md`.
 
-### 8-puzzle: ejecutar búsqueda sin visualización
-python 8-puzzle/run_eight_puzzle.py --puzzle `PUZZLE` --algorithm `ALGORITHM` --no-visualizer
-
-Sirve para correr el 8-puzzle y ver solo el resumen por consola.
-
-La organización del 8-puzzle quedó así:
+### Archivos relevantes
 
 - `8-puzzle/eight_puzzle/configs/default.json`: configuración compartida de ventana, render y búsqueda
 - `8-puzzle/eight_puzzle/puzzles/*.json`: tableros disponibles
-- `8-puzzle/run_eight_puzzle.py`: ejecuta la búsqueda y permite elegir puzzle por nombre
-- `8-puzzle/run_eight_puzzle_visualizer.py`: busca y visualiza una solución; con `--initial-only` muestra solo el estado inicial
-
-### Ejecutar un nivel con visualización
-python run_search.py --level `LEVEL` --algorithm `ALGORITHM`
-
-`LEVEL`:level_1, level_2, level_3
-
-`ALGORITHM`:
-
-Desinformados: bfs, dfs, dls, iddfs
-
-A*: astar_h1, astar_h1_player, astar_h2, astar_h2_player, astar_h2_deadlock, astar_h2_player_deadlock
-
-Greedy: greedy_h1, greedy_h1_player, greedy_h2, greedy_h2_player, greedy_h2_deadlock, greedy_h2_player_deadlock
-
-Sirve para correr un nivel y ver la solución en la ventana gráfica.
-
-### Ejecutar un nivel sin visualización
-python run_search.py --level `LEVEL` --algorithm `ALGORITHM` --no-visualizer
-
-`LEVEL`: level_1, level_2, level_3
-
-`ALGORITHM`:
-
-Desinformados: bfs, dfs, dls, iddfs
-
-A*: astar_h1, astar_h1_player, astar_h2, astar_h2_player, astar_h2_deadlock, astar_h2_player_deadlock
-
-Greedy: greedy_h1, greedy_h1_player, greedy_h2, greedy_h2_player, greedy_h2_deadlock, greedy_h2_player_deadlock
-
-Sirve para correr un nivel y ver solo el resumen por consola.
-
-### Ejecutar todas las corridas
-python run_all.py
-
-Sirve para correr todos los niveles y algoritmos configurados y guardar los resultados en output/results.csv.
-
-### Generar gráficos
-python plot_results.py
-
-Sirve para generar gráficos a partir de output/results.csv y guardarlos en output/graphs/.
+- `8-puzzle/run_eight_puzzle.py`: ejecuta la búsqueda
+- `8-puzzle/run_eight_puzzle_visualizer.py`: busca y visualiza la solución
