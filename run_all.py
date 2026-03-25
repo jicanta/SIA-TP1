@@ -29,6 +29,8 @@ def main():
             "expandidos",
             "generados",
             "visitados",
+            "frontera",
+            "frontera_max",
             "tiempo_segundos",
         ])
 
@@ -74,6 +76,8 @@ def main():
                             expanded_nodes = next((line.split(": ")[1] for line in lines if line.startswith("expandidos:")), "")
                             generated_nodes = next((line.split(": ")[1] for line in lines if line.startswith("generados:")), "")
                             visited_nodes = next((line.split(": ")[1] for line in lines if line.startswith("visitados:")), "")
+                            frontier_nodes = next((line.split(": ")[1] for line in lines if line.startswith("frontera:")), "")
+                            max_frontier_nodes = next((line.split(": ")[1] for line in lines if line.startswith("frontera_max:")), "")
 
                             print(f"✅ Encontrada! ({elapsed_time:.2f}s, Movs: {movements})")
 
@@ -85,22 +89,24 @@ def main():
                                 expanded_nodes,
                                 generated_nodes,
                                 visited_nodes,
+                                frontier_nodes,
+                                max_frontier_nodes,
                                 f"{elapsed_time:.4f}",
                             ])
                         else:
                             print("❌ No encontró solución.")
-                            writer.writerow([algorithm, level, "no", "", "", "", "", f"{elapsed_time:.4f}"])
+                            writer.writerow([algorithm, level, "no", "", "", "", "", "", "", f"{elapsed_time:.4f}"])
 
                     else:
                         print(f"⚠️  Error ejecutando el script (Exit code: {result.returncode})")
-                        writer.writerow([algorithm, level, "error", "", "", "", "", ""])
+                        writer.writerow([algorithm, level, "error", "", "", "", "", "", "", ""])
 
                 except subprocess.TimeoutExpired:
                     print("⏰ Timeout (más de 500 segundos)")
-                    writer.writerow([algorithm, level, "timeout", "", "", "", "", ">500"])
+                    writer.writerow([algorithm, level, "timeout", "", "", "", "", "", "", ">500"])
                 except Exception as e:
                     print(f"⚠️  Error inesperado: {e}")
-                    writer.writerow([algorithm, level, "error", "", "", "", "", ""])
+                    writer.writerow([algorithm, level, "error", "", "", "", "", "", "", ""])
 
     print("\n--------------------------------------------------")
     print(f"📁 Resultados guardados en: {results_file.name}")

@@ -53,8 +53,10 @@ def solve_astar(
     generated_states: set[StateT] = {initial_state}
     expanded_nodes = 0
     generated_nodes = 0
+    max_frontier_nodes = 1
 
     while frontier:
+        max_frontier_nodes = max(max_frontier_nodes, len(frontier))
         _, _, current = heapq.heappop(frontier)
 
         if current.state in closed:
@@ -72,6 +74,8 @@ def solve_astar(
                 expanded_nodes=expanded_nodes,
                 generated_nodes=generated_nodes,
                 visited_nodes=len(generated_states),
+                frontier_nodes=len(frontier),
+                max_frontier_nodes=max_frontier_nodes,
             )
 
         for action, next_state in problem.successors(current.state):
@@ -98,6 +102,8 @@ def solve_astar(
         expanded_nodes=expanded_nodes,
         generated_nodes=generated_nodes,
         visited_nodes=len(generated_states),
+        frontier_nodes=len(frontier),
+        max_frontier_nodes=max_frontier_nodes,
     )
 
 
@@ -118,8 +124,10 @@ def solve_greedy(
     generated_states: set[StateT] = {initial_state}
     expanded_nodes = 0
     generated_nodes = 0
+    max_frontier_nodes = 1
 
     while frontier:
+        max_frontier_nodes = max(max_frontier_nodes, len(frontier))
         _, _, current = heapq.heappop(frontier)
 
         if current.state in expanded:
@@ -137,6 +145,8 @@ def solve_greedy(
                 expanded_nodes=expanded_nodes,
                 generated_nodes=generated_nodes,
                 visited_nodes=len(generated_states),
+                frontier_nodes=len(frontier),
+                max_frontier_nodes=max_frontier_nodes,
             )
 
         for action, next_state in problem.successors(current.state):
@@ -162,4 +172,6 @@ def solve_greedy(
         expanded_nodes=expanded_nodes,
         generated_nodes=generated_nodes,
         visited_nodes=len(generated_states),
+        frontier_nodes=len(frontier),
+        max_frontier_nodes=max_frontier_nodes,
     )

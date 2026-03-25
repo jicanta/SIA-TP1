@@ -25,6 +25,8 @@ class SearchResult(Generic[StateT, ActionT]):
     expanded_nodes: int
     generated_nodes: int
     visited_nodes: int
+    frontier_nodes: int
+    max_frontier_nodes: int
 
 
 @dataclass(slots=True)
@@ -43,8 +45,10 @@ def solve_bfs(problem: SearchProblem[StateT, ActionT]) -> SearchResult[StateT, A
     visited: set[StateT] = {initial_state}
     expanded_nodes = 0
     generated_nodes = 0
+    max_frontier_nodes = 1
 
     while frontier:
+        max_frontier_nodes = max(max_frontier_nodes, len(frontier))
         current = frontier.popleft()
         expanded_nodes += 1
 
@@ -58,6 +62,8 @@ def solve_bfs(problem: SearchProblem[StateT, ActionT]) -> SearchResult[StateT, A
                 expanded_nodes=expanded_nodes,
                 generated_nodes=generated_nodes,
                 visited_nodes=len(visited),
+                frontier_nodes=len(frontier),
+                max_frontier_nodes=max_frontier_nodes,
             )
 
         for action, next_state in problem.successors(current.state):
@@ -82,6 +88,8 @@ def solve_bfs(problem: SearchProblem[StateT, ActionT]) -> SearchResult[StateT, A
         expanded_nodes=expanded_nodes,
         generated_nodes=generated_nodes,
         visited_nodes=len(visited),
+        frontier_nodes=len(frontier),
+        max_frontier_nodes=max_frontier_nodes,
     )
 
 
@@ -90,7 +98,7 @@ def solve_dfs(
     depth_limit: int = 10_000,
 ) -> SearchResult[StateT, ActionT]:
     _validate_non_negative(depth_limit, "depth_limit")
-    result, _, _ = _run_depth_limited_iteration(
+    result, _, _, _, _ = _run_depth_limited_iteration(
         problem=problem,
         depth_limit=depth_limit,
         algorithm_name="dfs",
@@ -103,7 +111,7 @@ def solve_dls(
     depth_limit: int,
 ) -> SearchResult[StateT, ActionT]:
     _validate_non_negative(depth_limit, "depth_limit")
-    result, _, _ = _run_depth_limited_iteration(
+    result, _, _, _, _ = _run_depth_limited_iteration(
         problem=problem,
         depth_limit=depth_limit,
         algorithm_name="dls",
@@ -120,9 +128,10 @@ def solve_iddfs(
     total_expanded_nodes = 0
     total_generated_nodes = 0
     visited_states: set[StateT] = {problem.initial_state}
+    overall_max_frontier = 0
 
     for depth_limit in range(max_depth + 1):
-        partial_result, cutoff, partial_visited = _run_depth_limited_iteration(
+        partial_result, cutoff, partial_visited, frontier_nodes, iter_max_frontier = _run_depth_limited_iteration(
             problem=problem,
             depth_limit=depth_limit,
             algorithm_name="iddfs",
@@ -131,6 +140,7 @@ def solve_iddfs(
         total_expanded_nodes += partial_result.expanded_nodes
         total_generated_nodes += partial_result.generated_nodes
         visited_states.update(partial_visited)
+        overall_max_frontier = max(overall_max_frontier, iter_max_frontier)
 
         if partial_result.found:
             return SearchResult(
@@ -141,6 +151,8 @@ def solve_iddfs(
                 expanded_nodes=total_expanded_nodes,
                 generated_nodes=total_generated_nodes,
                 visited_nodes=len(visited_states),
+                frontier_nodes=frontier_nodes,
+                max_frontier_nodes=overall_max_frontier,
             )
 
         if not cutoff:
@@ -154,6 +166,8 @@ def solve_iddfs(
         expanded_nodes=total_expanded_nodes,
         generated_nodes=total_generated_nodes,
         visited_nodes=len(visited_states),
+        frontier_nodes=0,
+        max_frontier_nodes=overall_max_frontier,
     )
 
 
@@ -180,7 +194,7 @@ def _run_depth_limited_iteration(
     depth_limit: int,
     algorithm_name: str,
     allow_shallower_revisit: bool = False,
-) -> tuple[SearchResult[StateT, ActionT], bool, set[StateT]]:
+) -> tuple[SearchResult[StateT, ActionT], bool, set[StateT], int, int]:
     initial_state = problem.initial_state
     frontier: list[_Node[StateT, ActionT]] = [_Node(state=initial_state, parent=None, action=None, depth=0)]
     visited_states: set[StateT] = {initial_state}
@@ -188,8 +202,10 @@ def _run_depth_limited_iteration(
     expanded_nodes = 0
     generated_nodes = 0
     reached_depth_limit = False
+    max_frontier_nodes = 1
 
     while frontier:
+        max_frontier_nodes = max(max_frontier_nodes, len(frontier))
         current = frontier.pop()
         expanded_nodes += 1
 
@@ -204,9 +220,13 @@ def _run_depth_limited_iteration(
                     expanded_nodes=expanded_nodes,
                     generated_nodes=generated_nodes,
                     visited_nodes=len(visited_states),
+                    frontier_nodes=len(frontier),
+                    max_frontier_nodes=max_frontier_nodes,
                 ),
                 reached_depth_limit,
                 visited_states,
+                len(frontier),
+                max_frontier_nodes,
             )
 
         if current.depth >= depth_limit:
@@ -247,9 +267,13 @@ def _run_depth_limited_iteration(
             expanded_nodes=expanded_nodes,
             generated_nodes=generated_nodes,
             visited_nodes=len(visited_states),
+            frontier_nodes=len(frontier),
+            max_frontier_nodes=max_frontier_nodes,
         ),
         reached_depth_limit,
         visited_states,
+        len(frontier),
+        max_frontier_nodes,
     )
 
 

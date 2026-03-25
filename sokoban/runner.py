@@ -124,6 +124,8 @@ def print_summary(result: SearchResult, label: str | None = None) -> None:
     print(f"expandidos: {result.expanded_nodes}")
     print(f"generados: {result.generated_nodes}")
     print(f"visitados: {result.visited_nodes}")
+    print(f"frontera: {result.frontier_nodes}")
+    print(f"frontera_max: {result.max_frontier_nodes}")
 
 
 def build_overlay_lines(result: SearchResult, label: str) -> tuple[str, ...]:
@@ -135,6 +137,8 @@ def build_overlay_lines(result: SearchResult, label: str) -> tuple[str, ...]:
         f"Expandidos: {result.expanded_nodes}",
         f"Generados: {result.generated_nodes}",
         f"Visitados: {result.visited_nodes}",
+        f"Frontera: {result.frontier_nodes}",
+        f"Frontera max: {result.max_frontier_nodes}",
     )
 
 
